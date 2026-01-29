@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stock Price Prediction & Options Trading</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .prediction-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .prediction-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .confidence {
+            background: #48bb78;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .greeks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .greek-item {
+            text-align: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+        
+        .greek-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+        
+        .greek-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .chart-container {
+            grid-column: 1 / -1;
+            height: 400px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Stock Prediction & Options Trading</h1>
+            <p>Advanced machine learning models for stock price prediction and options analysis</p>
+        </div>
+        
+        <div class="dashboard">
+            <!-- Stock Prediction Card -->
+            <div class="card">
+                <h3>📈 Stock Price Prediction</h3>
+                <div class="input-group">
+                    <label for="stockSymbol">Stock Symbol</label>
+                    <input type="text" id="stockSymbol" placeholder="e.g., AAPL, GOOGL, TSLA" value="AAPL">
+                </div>
+                <div class="input-group">
+                    <label for="predictionDays">Days Ahead</label>
+                    <select id="predictionDays">
+                        <option value="1">1 Day</option>
+                        <option value="5">5 Days</option>
+                        <option value="10">10 Days</option>
+                        <option value="30">30 Days</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="predictStock()">Predict Price</button>
+            </div>
+            
+            <!-- Options Calculator Card -->
+            <div class="card">
+                <h3>⚡ Options Calculator</h3>
+                <div class="input-group">
+                    <label for="optionSymbol">Stock Symbol</label>
+                    <input type="text" id="optionSymbol" placeholder="e.g., AAPL" value="AAPL">
+                </div>
+                <div class="input-group">
+                    <label for="strikePrice">Strike Price</label>
+                    <input type="number" id="strikePrice" placeholder="150" value="150">
+                </div>
+                <div class="input-group">
+                    <label for="expiryDays">Days to Expiry</label>
+                    <input type="number" id="expiryDays" placeholder="30" value="30">
+                </div>
+                <div class="input-group">
+                    <label for="optionType">Option Type</label>
+                    <select id="optionType">
+                        <option value="call">Call</option>
+                        <option value="put">Put</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="calculateOption()">Calculate Option</button>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="results" id="results" style="display: none;">
+            <h3>Results</h3>
+            <div id="resultContent"></div>
+        </div>
+        
+        <!-- Chart Section -->
+        <div class="card chart-container" id="chartContainer" style="display: none;">
+            <canvas id="priceChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000/api' 
+            : '/api';
+        
+        async function predictStock() {
+            const symbol = document.getElementById('stockSymbol').value.toUpperCase();
+            const daysAhead = parseInt(document.getElementById('predictionDays').value);
+            
+            if (!symbol) {
+                alert('Please enter a stock symbol');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/predictions/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        days_ahead: daysAhead,
+                        model_type: 'lstm'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayPredictionResults(data);
+                
+                // Get historical data for chart
+                const histResponse = await fetch(`${API_BASE}/stocks/data/${symbol}?period=3mo`);
+                if (histResponse.ok) {
+                    const histData = await histResponse.json();
+                    createPriceChart(histData, data);
+                }
+                
+            } catch (error) {
+                showError(`Error predicting stock price: ${error.message}`);
+            }
+        }
+        
+        async function calculateOption() {
+            const symbol = document.getElementById('optionSymbol').value.toUpperCase();
+            const strikePrice = parseFloat(document.getElementById('strikePrice').value);
+            const expiryDays = parseInt(document.getElementById('expiryDays').value);
+            const optionType = document.getElementById('optionType').value;
+            
+            if (!symbol || !strikePrice || !expiryDays) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/options/price`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        strike_price: strikePrice,
+                        expiry_days: expiryDays,
+                        option_type: optionType
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayOptionResults(data);
+                
+            } catch (error) {
+                showError(`Error calculating option price: ${error.message}`);
+            }
+        }
+        
+        function displayPredictionResults(data) {
+            const resultContent = document.getElementById('resultContent');
+            const currentPrice = data.predictions[0];
+            const confidence = (data.confidence_score * 100).toFixed(1);
+            
+            resultContent.innerHTML = `
+                <div class="prediction-result">
+                    <div>
+                        <h4>${data.symbol} Price Prediction</h4>
+                        <div class="prediction-value">$${currentPrice.toFixed(2)}</div>
+                    </div>
+                    <div class="confidence">Confidence: ${confidence}%</div>
+                </div>
+                ${data.predictions.length > 1 ? `
+                    <h4>Multi-day Predictions:</h4>
+                    ${data.predictions.map((price, index) => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                            <span>Day ${index + 1}:</span>
+                            <span style="font-weight: bold;">$${price.toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                ` : ''}
+            `;
+            
+            showResults();
+        }
+        
+        function displayOptionResults(data) {
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContent.innerHTML = `
+                <div class="prediction-result">
+                    <div>
+                        <h4>${data.symbol} ${data.option_type.toUpperCase()} Option</h4>
+                        <div class="prediction-value">$${data.theoretical_price}</div>
+                        <small>Strike: $${data.strike_price} | Current: $${data.current_stock_price.toFixed(2)}</small>
+                    </div>
+                </div>
+                
+                <h4>Option Greeks:</h4>
+                <div class="greeks-grid">
+                    <div class="greek-item">
+                        <div class="greek-label">Delta</div>
+                        <div class="greek-value">${data.greeks.delta}</div>
+                    </div>
+                    <div class="greek-item">
+                        <div class="greek-label">Gamma</div>
+                        <div class="greek-value">${data.greeks.gamma}</div>
+                    </div>
+                    <div class="greek-item">
+                        <div class="greek-label">Theta</div>
+                        <div class="greek-value">${data.greeks.theta}</div>
+                    </div>
+                    <div class="greek-item">
+                        <div class="greek-label">Vega</div>
+                        <div class="greek-value">${data.greeks.vega}</div>
+                    </div>
+                    <div class="greek-item">
+                        <div class="greek-label">Rho</div>
+                        <div class="greek-value">${data.greeks.rho}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                    <small><strong>Volatility:</strong> ${(data.volatility_used * 100).toFixed(2)}% | 
+                    <strong>Time to Expiry:</strong> ${data.time_to_expiry_days} days</small>
+                </div>
+            `;
+            
+            showResults();
+        }
+        
+        function createPriceChart(histData, predData) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            // Prepare historical data
+            const historicalPrices = histData.data.map(d => ({
+                x: d.Date || d.index,
+                y: d.Close
+            }));
+            
+            // Prepare prediction data
+            const lastDate = new Date(historicalPrices[historicalPrices.length - 1].x);
+            const predictionData = predData.predictions.map((price, index) => {
+                const predDate = new Date(lastDate);
+                predDate.setDate(predDate.getDate() + index + 1);
+                return {
+                    x: predDate.toISOString().split('T')[0],
+                    y: price
+                };
+            });
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Historical Prices',
+                        data: historicalPrices.slice(-30), // Last 30 days
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Predictions',
+                        data: predictionData,
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderDash: [5, 5],
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price ($)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${predData.symbol} Price Chart with Predictions`
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('chartContainer').style.display = 'block';
+        }
+        
+        function showLoading() {
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = '<div class="loading">🔄 Processing... Please wait</div>';
+            showResults();
+        }
+        
+        function showError(message) {
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = `<div class="error">❌ ${message}</div>`;
+            showResults();
+        }
+        
+        function showResults() {
+            document.getElementById('results').style.display = 'block';
+        }
+        
+        // Initialize with some sample data on load
+        window.addEventListener('load', function() {
+            console.log('AI Stock Prediction System Loaded');
+        });
+    </script>
+</body>
+</html>

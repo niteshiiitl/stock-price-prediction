@@ -1,0 +1,11 @@
+src/
+models/
+docker-compose.yml
+Dockerfile
+test_system.py
+run.py
+*.pyc
+__pycache__/
+.env
+.git/
+node_modules/
